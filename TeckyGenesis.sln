@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.32602.291
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TeckyGenesis", "TeckyGenesis\TeckyGenesis.csproj", "{BD1DEB38-74FE-49DD-AE29-299E8881442E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{BD1DEB38-74FE-49DD-AE29-299E8881442E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BD1DEB38-74FE-49DD-AE29-299E8881442E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BD1DEB38-74FE-49DD-AE29-299E8881442E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BD1DEB38-74FE-49DD-AE29-299E8881442E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {05956E43-2A6D-43E0-BC00-9CDA13082CBA}
+	EndGlobalSection
+EndGlobal
