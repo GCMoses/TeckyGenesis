@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
@@ -13,8 +12,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
-using TeckyGenesis;
-using TeckyGenesis.Models;
+using TechStaticTools;
+using Tecky.Core.Models;
 
 namespace TeckyGenesis.Areas.Identity.Pages.Account
 {
@@ -65,18 +64,13 @@ namespace TeckyGenesis.Areas.Identity.Pages.Account
             [Display(Name = "Confirm password")]
             [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
             public string ConfirmPassword { get; set; }
+            [Required]
             public string FullName { get; set; }
             public string PhoneNumber { get; set; }
         }
 
         public async Task OnGetAsync(string returnUrl = null)
         {
-            if (!await _roleManager.RoleExistsAsync(StaticFiles.AdminRole))
-            {
-                await _roleManager.CreateAsync(new IdentityRole(StaticFiles.AdminRole));
-                await _roleManager.CreateAsync(new IdentityRole(StaticFiles .CustomerRole));
-            }
-
             ReturnUrl = returnUrl;
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
         }
@@ -127,15 +121,17 @@ namespace TeckyGenesis.Areas.Identity.Pages.Account
                     }
                     else
                     {
-                        if (!User.IsInRole(StaticFiles.AdminRole))
+                        if (User.IsInRole(StaticFiles.AdminRole))
                         {
-                            await _signInManager.SignInAsync(user, isPersistent: false);
+                            TempData[StaticFiles.Success] = user.FullName + " has been registered";
+                            return RedirectToAction("Index", "Home");
                         }
                         else
                         {
-                            return RedirectToAction("Index");
+                            await _signInManager.SignInAsync(user, isPersistent: false);
+                            return LocalRedirect(returnUrl);
                         }
-                        return LocalRedirect(returnUrl);
+
                     }
                 }
                 foreach (var error in result.Errors)

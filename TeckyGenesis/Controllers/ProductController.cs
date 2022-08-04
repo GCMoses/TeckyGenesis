@@ -5,32 +5,34 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using TeckyGenesis.Models;
-using TeckyGenesis.AppData;
+using Tecky.Core.Models;
+using Tecky.DataFiles.AppData;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using TeckyGenesis.Models.VM;
+using Tecky.Core.Models.VM;
 using Microsoft.AspNetCore.Hosting;
 using System.IO;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
+using TechStaticTools;
+using Tecky.DataFiles.Repo_s.IRepo;
 
 namespace TeckyGenesis.Controllers
 {
     [Authorize(Roles = StaticFiles.AdminRole)]
     public class ProductController : Controller
     {
-        private readonly ApplicationDbContext _db;
+        private readonly IProductRepo _productRepo;
         private readonly IWebHostEnvironment _webHostEnvironment;
-        public ProductController(ApplicationDbContext db, IWebHostEnvironment webHostEnvironment)
+        public ProductController(IProductRepo productRepo, IWebHostEnvironment webHostEnvironment)
         {
-            _db = db;
+            _productRepo = productRepo;
             _webHostEnvironment = webHostEnvironment;
         }
 
 
         public IActionResult Index()
         {
-            IEnumerable<Product> objList = _db.Product.Include(u => u.Category).Include(u => u.ApplicationType);
+            IEnumerable<Product> objList = _productRepo.GetAll(includeProperties: "Category,ApplicationType");
 
             //foreach(var obj in objList)
             //{
@@ -59,17 +61,9 @@ namespace TeckyGenesis.Controllers
 
             ProductVM productVM = new ()
             {
-                Product = new Product(),
-                CategorySelectList = _db.Category.Select(i => new SelectListItem
-                {
-                    Text = i.Name,
-                    Value = i.Id.ToString()
-                }),
-                ApplicationTypeSelectList = _db.ApplicationType.Select(i => new SelectListItem
-                {
-                    Text = i.Name,
-                    Value = i.Id.ToString()
-                })
+                Product = new (),
+                CategorySelectList = _productRepo.GetAllDropdownList(StaticFiles.CategoryName),
+                ApplicationTypeSelectList = _productRepo.GetAllDropdownList(StaticFiles.ApplicationTypeName),
             };
 
             if (id == null)
@@ -79,7 +73,7 @@ namespace TeckyGenesis.Controllers
             }
             else
             {
-                productVM.Product = _db.Product.Find(id);
+                productVM.Product = _productRepo.Find(id.GetValueOrDefault());
                 if (productVM.Product == null)
                 {
                     return NotFound();
@@ -113,12 +107,12 @@ namespace TeckyGenesis.Controllers
 
                     productVM.Product.Image = fileName + extension;
 
-                    _db.Product.Add(productVM.Product);
+                    _productRepo.Add(productVM.Product);
                 }
                 else
                 {
                     //updating
-                    var objFromDb = _db.Product.AsNoTracking().FirstOrDefault(u => u.Id == productVM.Product.Id);
+                    var objFromDb = _productRepo.FirstOrDefault(u => u.Id == productVM.Product.Id, isTracking: false);
 
                     if (files.Count > 0)
                     {
@@ -144,23 +138,16 @@ namespace TeckyGenesis.Controllers
                     {
                         productVM.Product.Image = objFromDb.Image;
                     }
-                    _db.Product.Update(productVM.Product);
+                   _productRepo.Update(productVM.Product);
                 }
+                TempData[StaticFiles.Success] = "Product updated!";
 
-
-                _db.SaveChanges();
+                _productRepo.Save();
                 return RedirectToAction("Index");
             }
-            productVM.CategorySelectList = _db.Category.Select(i => new SelectListItem
-            {
-                Text = i.Name,
-                Value = i.Id.ToString()
-            });
-            productVM.ApplicationTypeSelectList = _db.ApplicationType.Select(i => new SelectListItem
-            {
-                Text = i.Name,
-                Value = i.Id.ToString()
-            });
+            productVM.CategorySelectList = _productRepo.GetAllDropdownList(StaticFiles.CategoryName);
+            productVM.ApplicationTypeSelectList = _productRepo.GetAllDropdownList(StaticFiles.ApplicationTypeName);
+
             return View(productVM);
 
         }
@@ -174,8 +161,7 @@ namespace TeckyGenesis.Controllers
             {
                 return NotFound();
             }
-            Product product = _db.Product.Include(u => u.Category).Include(u => u.ApplicationType).FirstOrDefault(u => u.Id == id);
-            //product.Category = _db.Category.Find(product.CategoryId);
+            Product product = _productRepo.FirstOrDefault(u => u.Id == id, includeProperties: "Category,ApplicationType");
             if (product == null)
             {
                 return NotFound();
@@ -189,7 +175,7 @@ namespace TeckyGenesis.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult DeletePost(int? id)
         {
-            var obj = _db.Product.Find(id);
+            var obj = _productRepo.Find(id.GetValueOrDefault());
             if (obj == null)
             {
                 return NotFound();
@@ -202,10 +188,9 @@ namespace TeckyGenesis.Controllers
             {
                 System.IO.File.Delete(oldFile);
             }
-
-
-            _db.Product.Remove(obj);
-            _db.SaveChanges();
+            _productRepo.Remove(obj);
+            _productRepo.Save();
+            TempData[StaticFiles.Success] = "Product removed!";
             return RedirectToAction("Index");
 
 

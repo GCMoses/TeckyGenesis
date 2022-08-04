@@ -98,12 +98,14 @@ namespace TeckyGenesis.Areas.Identity.Pages.Account
                 }
                 else
                 {
+                    ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
                     ModelState.AddModelError(string.Empty, "Invalid login attempt.");
                     return Page();
                 }
             }
 
-            // If we got this far, something failed, redisplay form
+            ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
+            // If we got this far, something kak happened so fix it, redisplay form
             return Page();
         }
     }

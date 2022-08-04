@@ -5,26 +5,28 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using TeckyGenesis.Models;
-using TeckyGenesis.AppData;
+using Tecky.Core.Models;
+using Tecky.DataFiles.AppData;
 using Microsoft.AspNetCore.Authorization;
+using TechStaticTools;
+using Tecky.DataFiles.Repo_s.IRepo;
 
 namespace TeckyGenesis.Controllers
 {
     [Authorize(Roles = StaticFiles.AdminRole)]
     public class CategoryController : Controller
     {
-        private readonly ApplicationDbContext _db;
+        private readonly ICategoryRepo _categoryRepo;
 
-        public CategoryController(ApplicationDbContext db)
+        public CategoryController(ICategoryRepo categoryRepo)
         {
-            _db = db;
+            _categoryRepo = categoryRepo;
         }
 
 
         public IActionResult Index()
         {
-            IEnumerable<Category> objList = _db.Category;
+            IEnumerable<Category> objList = _categoryRepo.GetAll();
             return View(objList);
         }
 
@@ -43,8 +45,9 @@ namespace TeckyGenesis.Controllers
         {
             if (ModelState.IsValid)
             {
-                _db.Category.Add(obj);
-                _db.SaveChanges();
+                _categoryRepo.Add(obj);
+                _categoryRepo.Save();
+                TempData[StaticFiles.Success] = "Category created!";
                 return RedirectToAction("Index");
             }
             return View(obj);
@@ -58,7 +61,7 @@ namespace TeckyGenesis.Controllers
             {
                 return NotFound();
             }
-            var obj = _db.Category.Find(id);
+            var obj = _categoryRepo.Find(id.GetValueOrDefault());
             if (obj == null)
             {
                 return NotFound();
@@ -75,8 +78,9 @@ namespace TeckyGenesis.Controllers
         {
             if (ModelState.IsValid)
             {
-                _db.Category.Update(obj);
-                _db.SaveChanges();
+                _categoryRepo.Update(obj);
+                _categoryRepo.Save();
+                TempData[StaticFiles.Success] = "Category updated!";
                 return RedirectToAction("Index");
             }
             return View(obj);
@@ -90,7 +94,7 @@ namespace TeckyGenesis.Controllers
             {
                 return NotFound();
             }
-            var obj = _db.Category.Find(id);
+            var obj = _categoryRepo.Find(id.GetValueOrDefault());
             if (obj == null)
             {
                 return NotFound();
@@ -104,13 +108,14 @@ namespace TeckyGenesis.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult DeletePost(int? id)
         {
-            var obj = _db.Category.Find(id);
+            var obj = _categoryRepo.Find(id.GetValueOrDefault());
             if (obj == null)
             {
                 return NotFound();
             }
-            _db.Category.Remove(obj);
-            _db.SaveChanges();
+            _categoryRepo.Remove(obj);
+            _categoryRepo.Save();
+            TempData[StaticFiles.Success] = "Category deleted!";
             return RedirectToAction("Index");
         }
 

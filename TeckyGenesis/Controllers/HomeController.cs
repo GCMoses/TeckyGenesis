@@ -6,23 +6,28 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using TeckyGenesis.AppData;
-using TeckyGenesis.Extensions;
-using TeckyGenesis.Models;
-using TeckyGenesis.Models.VM;
+using Tecky.DataFiles.AppData;
+using Tecky.Core.Models;
+using Tecky.Core.Models.VM;
+using TechStaticTools;
+using Tecky.DataFiles.Repo_s.IRepo;
 
 namespace TeckyGenesis.Controllers
 {
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
-        private readonly ApplicationDbContext _db;
+        private readonly IProductRepo _productRepo;
+        private readonly ICategoryRepo _categoryRepo;
 
 
-        public HomeController(ILogger<HomeController> logger, ApplicationDbContext db)
+
+        public HomeController(ILogger<HomeController> logger, IProductRepo productRepo,
+            ICategoryRepo categoryRepo)
         {
             _logger = logger;
-            _db = db;   
+            _productRepo = productRepo;
+            _categoryRepo = categoryRepo;
         }
 
         public IActionResult Index()
@@ -30,8 +35,8 @@ namespace TeckyGenesis.Controllers
 
             HomeVM homeVM = new()
             {
-                Products = _db.Product.Include(u => u.Category).Include(u => u.ApplicationType),
-                Categories = _db.Category
+                Products = _productRepo.GetAll(includeProperties: "Category,ApplicationType"),
+                Categories = _categoryRepo.GetAll()
             };
             return View(homeVM);
         }
@@ -47,8 +52,7 @@ namespace TeckyGenesis.Controllers
 
             DetailsVM DetailsVM = new()
             {
-                Product = _db.Product.Include(u => u.Category).Include(u => u.ApplicationType)
-                .Where(u => u.Id == id).FirstOrDefault(),
+                Product = _productRepo.FirstOrDefault(u => u.Id == id, includeProperties: "Category,ApplicationType"),
                 ExistsInCart = false
             };
 
@@ -66,7 +70,7 @@ namespace TeckyGenesis.Controllers
 
 
         [HttpPost, ActionName("Details")]
-        public IActionResult DetailsPost(int id)
+        public IActionResult DetailsPost(int id, DetailsVM detailsVM)
         {
             List<ShoppingCart> shoppingCartList = new();
             if (HttpContext.Session.Get<IEnumerable<ShoppingCart>>(StaticFiles.SessionCart) != null
@@ -74,8 +78,9 @@ namespace TeckyGenesis.Controllers
             {
                 shoppingCartList = HttpContext.Session.Get<List<ShoppingCart>>(StaticFiles.SessionCart);
             }
-            shoppingCartList.Add(new ShoppingCart { ProductId = id });
+            shoppingCartList.Add(new ShoppingCart { ProductId = id, Item = detailsVM.Product.TempItem });
             HttpContext.Session.Set(StaticFiles.SessionCart, shoppingCartList);
+            TempData[StaticFiles.Success] = "Item added to cart!";
             return RedirectToAction(nameof(Index));
         }
 
@@ -95,6 +100,7 @@ namespace TeckyGenesis.Controllers
             }
 
             HttpContext.Session.Set(StaticFiles.SessionCart, shoppingCartList);
+            TempData[StaticFiles.Success] = "Item removed!";
             return RedirectToAction(nameof(Index));
         }
 

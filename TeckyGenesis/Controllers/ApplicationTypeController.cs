@@ -5,26 +5,28 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
-using TeckyGenesis.Models;
-using TeckyGenesis.AppData;
+using Tecky.Core.Models;
 using Microsoft.AspNetCore.Authorization;
+using TechStaticTools;
+using Tecky.DataFiles.AppData;
+using Tecky.DataFiles.Repo_s.IRepo;
 
 namespace TeckyGenesis.Controllers
 {
     [Authorize(Roles = StaticFiles.AdminRole)]
     public class ApplicationTypeController : Controller
 {
-    private readonly ApplicationDbContext _db;
+    private readonly IApplicationTypeRepo _applicationTypeRepo;
 
-    public ApplicationTypeController(ApplicationDbContext db)
+    public ApplicationTypeController(IApplicationTypeRepo applicationTypeRepo)
     {
-        _db = db;
+        _applicationTypeRepo = applicationTypeRepo;
     }
 
 
     public IActionResult Index()
     {
-        IEnumerable<ApplicationType> objList = _db.ApplicationType;
+        IEnumerable<ApplicationType> objList = _applicationTypeRepo.GetAll();
         return View(objList);
     }
 
@@ -43,8 +45,9 @@ namespace TeckyGenesis.Controllers
     {
             if (ModelState.IsValid)
             {
-                _db.ApplicationType.Add(obj);
-                _db.SaveChanges();
+                _applicationTypeRepo.Add(obj);
+                _applicationTypeRepo.Save();
+                TempData[StaticFiles.Success] = "ApplicationType created!";
                 return RedirectToAction("Index");
             }
             return View(obj);
@@ -59,7 +62,7 @@ namespace TeckyGenesis.Controllers
             {
                 return NotFound();
             }
-            var obj = _db.ApplicationType.Find(id);
+            var obj = _applicationTypeRepo.Find(id.GetValueOrDefault());
             if (obj == null)
             {
                 return NotFound();
@@ -75,8 +78,9 @@ namespace TeckyGenesis.Controllers
         {
             if (ModelState.IsValid)
             {
-                _db.ApplicationType.Update(obj);
-                _db.SaveChanges();
+                _applicationTypeRepo.Update(obj);
+                _applicationTypeRepo.Save();
+                TempData[StaticFiles.Success] = "ApplicationType updated!";
                 return RedirectToAction("Index");
             }
             return View(obj);
@@ -90,7 +94,7 @@ namespace TeckyGenesis.Controllers
             {
                 return NotFound();
             }
-            var obj = _db.ApplicationType.Find(id);
+            var obj = _applicationTypeRepo.Find(id.GetValueOrDefault());
             if (obj == null)
             {
                 return NotFound();
@@ -104,13 +108,14 @@ namespace TeckyGenesis.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult DeletePost(int? id)
         {
-            var obj = _db.ApplicationType.Find(id);
+            var obj = _applicationTypeRepo.Find(id.GetValueOrDefault());
             if (obj == null)
             {
                 return NotFound();
             }
-            _db.ApplicationType.Remove(obj);
-            _db.SaveChanges();
+            _applicationTypeRepo.Remove(obj);
+            _applicationTypeRepo.Save();
+            TempData[StaticFiles.Success] = "ApplicationType deleted!";
             return RedirectToAction("Index");
 
 
